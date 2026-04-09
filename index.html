@@ -53,6 +53,14 @@ html,body { width:100%; height:100%; overflow:hidden;
   display:flex; align-items:center; justify-content:center; transition:all 0.15s;
 }
 #help-btn:hover { background:rgba(201,168,76,0.3); }
+#reset-btn {
+  position:absolute; left:0; top:50%; transform:translateY(-50%);
+  width:26px; height:26px; border-radius:50%;
+  background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.3);
+  color:var(--gold); font-size:0.9rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+}
+#reset-btn:hover { background:rgba(201,168,76,0.25); }
 
 /* Opponent */
 #opp-area {
@@ -211,6 +219,7 @@ html,body { width:100%; height:100%; overflow:hidden;
     <h1>ROYAL FLUSH POKER</h1>
     <div class="hline"></div>
     <button id="help-btn" onclick="openHelp()">？</button>
+    <button id="reset-btn" onclick="resetGame()" title="リセット">↺</button>
   </div>
 
   <div id="opp-area">
@@ -401,7 +410,19 @@ function cmpH(a,b){
 }
 
 // ── STATE ──
-let G={dk:[],ph:[],oh:[],cm:[],pc:1500,oc:1500,pot:0,pb:0,ob:0,cur:0,
+function loadSave(){
+  try{
+    const s=JSON.parse(localStorage.getItem('rfpoker'));
+    if(s&&s.pc>0&&s.oc>0)return{pc:s.pc,oc:s.oc};
+  }catch(e){}
+  return{pc:1500,oc:1500};
+}
+function save(){
+  try{localStorage.setItem('rfpoker',JSON.stringify({pc:G.pc,oc:G.oc}));}catch(e){}
+}
+
+const saved=loadSave();
+let G={dk:[],ph:[],oh:[],cm:[],pc:saved.pc,oc:saved.oc,pot:0,pb:0,ob:0,cur:0,
        phase:'idle',pTurn:false,pF:false,oF:false,dlrP:true,sb:10,
        pAllin:false, oAllin:false};
 
@@ -682,10 +703,23 @@ function endH(w){
   // チップ切れの場合はガイドを上書き
   if(G.pc<=0){ setGuide('💀 チップ切れ！NEW HANDでリセットして再スタートできます。',''); }
   else if(G.oc<=0){ setGuide('🏆 相手のチップを全部奪った！NEW HANDで続けられます。',''); }
+  save();
   setBtns(false,false,false,false,true);setBadge('HAND OVER');
 }
 
 // Init
+function resetGame(){
+  if(!confirm('チップをリセットしますか？'))return;
+  localStorage.removeItem('rfpoker');
+  G.pc=1500;G.oc=1500;G.phase='idle';
+  G.pot=G.pb=G.ob=G.cur=0;G.ph=[];G.oh=[];G.cm=[];
+  G.pF=G.oF=G.pAllin=G.oAllin=false;
+  $('opp-area').classList.remove('win-glow');$('player-area').classList.remove('win-glow');
+  $('opp-status').textContent='';$('or').style.display='none';
+  setBadge('WELCOME');setS('');
+  setGuide('NEW HAND ボタンでゲームを始めましょう！','右上の ？ でルール・用語を確認できます');
+  setBtns(false,false,false,false,true);render();
+}
 setBtns(false,false,false,false,true);render();
 </script>
 </body>
