@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ROYAL FLUSH POKER</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Oswald:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --gold:#c9a84c; --gold-light:#f0d080; --gold-dark:#8b6914;
+  --cream:#f5f0e8; --red:#c0392b;
+}
+html,body { width:100%; height:100%; overflow:hidden;
+  background:radial-gradient(ellipse at center,#0a1a0e 0%,#050d08 100%);
+  font-family:'Oswald',sans-serif; color:var(--cream); user-select:none; }
+
+#app {
+  display:flex; flex-direction:column;
+  height:100vh; max-width:540px; margin:0 auto;
+  padding:6px 10px; gap:5px;
+}
+
+/* Header */
+#header { text-align:center; flex-shrink:0; position:relative; }
+#header h1 {
+  font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:900;
+  letter-spacing:0.2em;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold-light),var(--gold));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  filter:drop-shadow(0 1px 6px rgba(201,168,76,0.5));
+}
+.hline { height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:2px auto; width:50%; }
+#help-btn {
+  position:absolute; right:0; top:50%; transform:translateY(-50%);
+  width:26px; height:26px; border-radius:50%;
+  background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.5);
+  color:var(--gold); font-size:0.8rem; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+}
+#help-btn:hover { background:rgba(201,168,76,0.3); }
+
+/* Opponent */
+#opp-area {
+  flex-shrink:0; background:rgba(0,0,0,0.3);
+  border:1px solid rgba(201,168,76,0.2); border-radius:10px;
+  padding:6px 10px; display:flex; align-items:center; gap:10px;
+}
+.pinfo { flex:1; }
+.plabel { font-size:0.55rem; letter-spacing:0.3em; color:var(--gold); opacity:0.7; }
+.pname  { font-family:'Playfair Display',serif; font-size:0.85rem; }
+.pchips { font-size:0.75rem; color:var(--gold-light); }
+.hrbadge {
+  display:none; font-size:0.55rem; padding:1px 6px; border-radius:3px;
+  background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.4);
+  color:var(--gold); margin-top:2px; letter-spacing:0.1em;
+}
+#opp-status { font-size:0.72rem; color:#aaa; font-style:italic; min-width:60px; text-align:right; }
+.crow { display:flex; gap:4px; }
+
+/* All-in badge */
+.allin-badge {
+  display:inline-block; font-size:0.55rem; padding:1px 7px; border-radius:3px;
+  background:rgba(255,80,80,0.2); border:1px solid rgba(255,80,80,0.5);
+  color:#ff9999; margin-top:2px; letter-spacing:0.12em; font-weight:600;
+}
+
+/* Cards */
+.card {
+  width:42px; height:60px; border-radius:5px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-family:'Playfair Display',serif; position:relative; flex-shrink:0;
+  box-shadow:0 3px 10px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.1);
+  transition:transform 0.12s;
+}
+.card.fu { background:linear-gradient(145deg,#fefefe,#f0ece4); }
+.card.fd { background:linear-gradient(145deg,#1a2a5e,#0f1a40); border:1px solid rgba(201,168,76,0.3); }
+.card.fd::after { content:'♦'; font-size:1.4rem; color:rgba(201,168,76,0.25); }
+.card.red { color:var(--red); } .card.blk { color:#111; }
+.c-rank { font-size:0.85rem; font-weight:700; line-height:1; }
+.c-suit { font-size:0.75rem; line-height:1; }
+.c-tl { position:absolute; top:3px; left:4px; font-size:0.45rem; line-height:1.2; text-align:center; }
+.c-br { position:absolute; bottom:3px; right:4px; font-size:0.45rem; line-height:1.2; text-align:center; transform:rotate(180deg); }
+.card.ph { opacity:0.2; }
+
+/* Table */
+#table-area {
+  flex:1; min-height:0;
+  background:radial-gradient(ellipse at center,#245c3a 0%,#0f2d1c 100%);
+  border:2px solid rgba(201,168,76,0.3); border-radius:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:space-evenly;
+  padding:6px 8px; position:relative;
+  box-shadow:inset 0 2px 0 rgba(201,168,76,0.08),0 0 30px rgba(0,0,0,0.5);
+}
+#table-area::before {
+  content:''; position:absolute; inset:5px; border-radius:10px;
+  border:1px solid rgba(201,168,76,0.08); pointer-events:none;
+}
+.phase-badge {
+  font-size:0.55rem; letter-spacing:0.35em; color:var(--gold); opacity:0.7;
+  background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:20px;
+  border:1px solid rgba(201,168,76,0.2);
+}
+#comm-row { display:flex; gap:6px; justify-content:center; }
+#pot-row { font-size:0.72rem; color:var(--gold-light); letter-spacing:0.08em; text-align:center; }
+#pot-row .pv { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--gold); filter:drop-shadow(0 0 6px rgba(201,168,76,0.5)); }
+#bet-strip { display:flex; justify-content:space-around; font-size:0.6rem; color:var(--cream); opacity:0.65; letter-spacing:0.06em; width:100%; }
+.bitem span { display:block; font-size:0.82rem; color:var(--gold-light); font-weight:600; }
+
+/* Guide box */
+#guide-box {
+  width:100%; background:rgba(0,0,0,0.45); border-radius:8px;
+  border:1px solid rgba(201,168,76,0.15); padding:5px 10px; text-align:center;
+}
+#guide-situation { font-size:0.72rem; color:#cce8ff; line-height:1.4; letter-spacing:0.02em; }
+#guide-hint { font-size:0.65rem; color:rgba(201,168,76,0.7); margin-top:2px; font-style:italic; line-height:1.3; }
+
+#status-msg { font-size:0.75rem; font-style:italic; color:var(--cream); opacity:0.9; text-align:center; min-height:16px; }
+#status-msg.win{color:#7fff7f;} #status-msg.lose{color:#ff8888;} #status-msg.tie{color:var(--gold-light);}
+
+/* Player */
+#player-area {
+  flex-shrink:0; background:rgba(0,0,0,0.3);
+  border:1px solid rgba(201,168,76,0.2); border-radius:10px;
+  padding:6px 10px; display:flex; align-items:center; gap:10px;
+}
+
+/* Actions */
+#action-area { flex-shrink:0; display:flex; flex-direction:column; gap:4px; }
+#raise-row { display:flex; align-items:center; gap:8px; padding:0 2px; }
+#rlabel { font-size:0.6rem; letter-spacing:0.15em; color:var(--gold); opacity:0.7; white-space:nowrap; }
+#rslider {
+  flex:1; -webkit-appearance:none; height:2px; border-radius:2px;
+  background:linear-gradient(90deg,var(--gold-dark),var(--gold)); outline:none;
+}
+#rslider::-webkit-slider-thumb {
+  -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+  background:var(--gold); box-shadow:0 0 6px rgba(201,168,76,0.7); cursor:pointer;
+}
+#ramt { font-size:0.8rem; color:var(--gold-light); min-width:42px; text-align:right; }
+#btn-row { display:flex; gap:5px; }
+.btn {
+  flex:1; border:none; border-radius:8px;
+  font-family:'Oswald',sans-serif; font-size:0.68rem; font-weight:600;
+  letter-spacing:0.08em; cursor:pointer; transition:all 0.12s; text-transform:uppercase;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:7px 3px; gap:1px;
+}
+.btn-main { font-size:0.68rem; }
+.btn-sub { font-size:0.5rem; opacity:0.7; font-weight:300; letter-spacing:0.05em; line-height:1.2; text-align:center; }
+.btn:disabled { opacity:0.18; cursor:not-allowed; }
+.btn:disabled .btn-sub { display:none; }
+.btn:active:not(:disabled) { transform:scale(0.96); }
+#bfold  { background:linear-gradient(135deg,#3a1515,#5c2020); color:#ffaaaa; border:1px solid rgba(200,80,80,0.3); }
+#bcheck { background:linear-gradient(135deg,#1a2a3a,#1e3a5c); color:#aaccff; border:1px solid rgba(80,140,220,0.3); }
+#bcall  { background:linear-gradient(135deg,#1a3a2a,#1e5c3a); color:#aaffcc; border:1px solid rgba(80,200,140,0.3); }
+#braise { background:linear-gradient(135deg,var(--gold-dark),var(--gold)); color:#0a0a0a; font-weight:700; border:1px solid var(--gold-light); }
+#bdeal  { background:linear-gradient(135deg,#2a1a40,#4a2a70); color:var(--gold-light); border:1px solid rgba(180,140,220,0.4); flex:2; }
+
+/* Help modal */
+#help-modal {
+  display:none; position:fixed; inset:0; z-index:100;
+  background:rgba(0,0,0,0.85); align-items:center; justify-content:center;
+}
+#help-modal.open { display:flex; }
+#help-inner {
+  background:linear-gradient(160deg,#0d1f14,#081208);
+  border:1px solid rgba(201,168,76,0.4); border-radius:16px;
+  padding:18px 16px; max-width:460px; width:90%;
+  max-height:85vh; overflow-y:auto;
+}
+#help-inner h2 { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--gold); text-align:center; margin-bottom:12px; letter-spacing:0.15em; }
+.help-section { margin-bottom:12px; }
+.help-section h3 { font-size:0.7rem; letter-spacing:0.25em; color:var(--gold-light); border-bottom:1px solid rgba(201,168,76,0.2); padding-bottom:3px; margin-bottom:6px; }
+.help-item { margin-bottom:8px; }
+.help-term { font-size:0.75rem; font-weight:600; color:#aaddff; letter-spacing:0.1em; display:inline-block; margin-bottom:2px; }
+.help-desc { font-size:0.7rem; color:rgba(245,240,232,0.8); line-height:1.5; }
+.help-ex { font-size:0.65rem; color:rgba(201,168,76,0.65); margin-top:2px; font-style:italic; }
+#help-close {
+  display:block; margin:14px auto 0;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+  color:#0a0a0a; font-family:'Oswald',sans-serif; font-weight:700;
+  font-size:0.8rem; letter-spacing:0.2em; border:none; border-radius:8px;
+  padding:10px 30px; cursor:pointer;
+}
+
+/* Animations */
+@keyframes winGlow{0%,100%{box-shadow:0 0 0 2px var(--gold),0 0 15px rgba(201,168,76,0.3);}50%{box-shadow:0 0 0 3px var(--gold-light),0 0 30px rgba(201,168,76,0.7);}}
+.win-glow{animation:winGlow 0.8s ease infinite;}
+.thinking{font-size:0.7rem;color:#aaa;animation:blink 0.9s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <h1>ROYAL FLUSH POKER</h1>
+    <div class="hline"></div>
+    <button id="help-btn" onclick="openHelp()">？</button>
+  </div>
+
+  <div id="opp-area">
+    <div class="pinfo">
+      <div class="plabel">OPPONENT</div>
+      <div class="pname">The Dealer</div>
+      <div class="pchips">🪙 <span id="oc">1500</span></div>
+      <div class="hrbadge" id="or"></div>
+      <div class="allin-badge" id="opp-allin" style="display:none;">ALL IN</div>
+    </div>
+    <div id="opp-status"></div>
+    <div class="crow" id="opp-cards"></div>
+  </div>
+
+  <div id="table-area">
+    <div class="phase-badge" id="badge">WELCOME</div>
+    <div id="comm-row"></div>
+    <div id="pot-row">ポット &nbsp;<span class="pv" id="pv">0</span> 🪙</div>
+    <div id="bet-strip">
+      <div class="bitem">あなたのBET<span id="pba">0</span></div>
+      <div class="bitem">コール額<span id="tca">0</span></div>
+      <div class="bitem">相手のBET<span id="oba">0</span></div>
+    </div>
+    <div id="guide-box">
+      <div id="guide-situation">NEW HAND ボタンでゲームを始めましょう！</div>
+      <div id="guide-hint">右上の ？ でルール・用語を確認できます</div>
+    </div>
+    <div id="status-msg"></div>
+    <div class="hrbadge" id="pr" style="display:none; margin:0 auto;"></div>
+  </div>
+
+  <div id="player-area">
+    <div class="pinfo">
+      <div class="plabel">YOU</div>
+      <div class="pname">Player</div>
+      <div class="pchips">🪙 <span id="pc">1500</span></div>
+      <div class="allin-badge" id="player-allin" style="display:none;">ALL IN 🔥</div>
+    </div>
+    <div class="crow" id="player-cards"></div>
+  </div>
+
+  <div id="action-area">
+    <div id="raise-row">
+      <div id="rlabel">レイズ額</div>
+      <input type="range" id="rslider" min="20" max="500" value="50" step="10">
+      <div id="ramt">50</div>
+    </div>
+    <div id="btn-row">
+      <button class="btn" id="bfold"><span class="btn-main">Fold</span><span class="btn-sub">降りる</span></button>
+      <button class="btn" id="bcheck"><span class="btn-main">Check</span><span class="btn-sub">様子見</span></button>
+      <button class="btn" id="bcall"><span class="btn-main">Call</span><span class="btn-sub">合わせる</span></button>
+      <button class="btn" id="braise"><span class="btn-main">Raise</span><span class="btn-sub">賭け増す</span></button>
+      <button class="btn" id="bdeal" style="flex:2; font-size:0.75rem;"><span class="btn-main">NEW HAND</span><span class="btn-sub">次のゲーム</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div id="help-modal">
+  <div id="help-inner">
+    <h2>📖 ポーカー ガイド</h2>
+    <div class="help-section">
+      <h3>🎯 ゲームの基本</h3>
+      <div class="help-item">
+        <div class="help-desc">テキサスホールデムは、自分だけが見られる「ホールカード2枚」と、全員が使える「コミュニティカード5枚」を組み合わせて、最強の手役5枚を作るゲームです。</div>
+      </div>
+    </div>
+    <div class="help-section">
+      <h3>🃏 ゲームの流れ</h3>
+      <div class="help-item"><div class="help-term">① PRE-FLOP</div><div class="help-desc">手札2枚が配られ最初のベットラウンド。</div></div>
+      <div class="help-item"><div class="help-term">② FLOP</div><div class="help-desc">場に3枚が表向きに出る。</div></div>
+      <div class="help-item"><div class="help-term">③ TURN</div><div class="help-desc">場に4枚目が出る。</div></div>
+      <div class="help-item"><div class="help-term">④ RIVER</div><div class="help-desc">場に5枚目（最後）が出る。</div></div>
+      <div class="help-item"><div class="help-term">⑤ SHOWDOWN</div><div class="help-desc">手を見せ合い、強い役の方がポットを獲得。</div></div>
+    </div>
+    <div class="help-section">
+      <h3>🎮 アクションの意味</h3>
+      <div class="help-item"><div class="help-term">✅ Check（チェック）</div><div class="help-desc">追加でチップを出さずパス。誰もベットしていない時だけ選べる。</div><div class="help-ex">「様子を見たい・でも降りたくない」時に使う</div></div>
+      <div class="help-item"><div class="help-term">📞 Call（コール）</div><div class="help-desc">相手の賭け額に合わせてチップを出し、ゲームに参加し続ける。</div><div class="help-ex">相手が100賭けたら自分も100出す</div></div>
+      <div class="help-item"><div class="help-term">📈 Raise（レイズ）</div><div class="help-desc">相手より多くチップを積む。強い手の時や、ブラフで相手を降ろしたい時に。</div></div>
+      <div class="help-item"><div class="help-term">🚫 Fold（フォールド）</div><div class="help-desc">手札を捨てて降りる。それまで賭けたチップは失うが損失をそこで止められる。</div></div>
+      <div class="help-item"><div class="help-term">🔥 All-in（オールイン）</div><div class="help-desc">持っているチップをすべて賭ける。チップが0になっても、ショーダウンまで自動で進める。相手がさらにレイズしても追加ベットは不要。</div><div class="help-ex">チップを使い切った場合、自動的にオールイン扱いになります</div></div>
+    </div>
+    <div class="help-section">
+      <h3>🏆 手役の強さ（弱→強）</h3>
+      <div class="help-desc" style="line-height:2;">
+        ハイカード → ワンペア → ツーペア → スリーカード → ストレート → フラッシュ → フルハウス → フォーカード → ストレートフラッシュ
+      </div>
+    </div>
+    <div class="help-section">
+      <h3>💡 初心者のコツ</h3>
+      <div class="help-desc" style="line-height:1.8;">
+        ・フロップで役ができていなければフォールドも勇気<br>
+        ・強い手の時はレイズしてポットを大きくしよう<br>
+        ・チップが少ない時はオールインで勝負できる<br>
+        ・チェックで無料で次のカードを見られる
+      </div>
+    </div>
+    <button id="help-close" onclick="closeHelp()">閉じる</button>
+  </div>
+</div>
+
+<script>
+const RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const SUITS=['♠','♥','♦','♣'];
+const RV={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+const HN=['ハイカード','ワンペア','ツーペア','スリーカード','ストレート','フラッシュ','フルハウス','フォーカード','ストレートフラッシュ'];
+const $=id=>document.getElementById(id);
+
+function openHelp(){$('help-modal').classList.add('open');}
+function closeHelp(){$('help-modal').classList.remove('open');}
+$('help-modal').onclick=e=>{if(e.target===$('help-modal'))closeHelp();};
+
+// ── GUIDE TEXT ──
+function getGuide(G){
+  if(G.phase==='idle') return {sit:'NEW HAND ボタンでゲームを始めましょう！',hint:'右上の ？ でルール・用語を確認できます'};
+  const toCall=G.cur-G.pb;
+  if(!G.pTurn){return {sit:'⏳ 相手が考えています...',hint:'相手のアクションを待っています'};}
+  if(G.pAllin){return {sit:'🔥 オールイン！チップをすべて賭けました。あとはカードに任せましょう。',hint:'ショーダウンまで自動で進みます'};}
+  if(G.phase==='preflop'){
+    return toCall>0
+      ? {sit:`💡 プリフロップ。コール（${toCall}）でゲームに参加するか、レイズでプレッシャーをかけるか、フォールドで降りるか。`,hint:'まずコールで様子を見るのがオススメ'}
+      : {sit:`💡 チェック（パス）か、レイズでベットできます。`,hint:'チェックで無料で次のカードへ'};
+  }
+  if(G.phase==='flop'){
+    return toCall>0
+      ? {sit:`📢 相手がベット（${G.ob}）！コール・レイズ・フォールドを選んでください。`,hint:'コール＝同額出して続行 ／ フォールド＝降りる'}
+      : {sit:`🃏 フロップ3枚が出ました。役を確認してチェックかレイズ。`,hint:'手役バッジで今の役が確認できます ↑'};
+  }
+  if(G.phase==='turn'){
+    return toCall>0
+      ? {sit:`📢 相手がベット（${G.ob}）！残り1枚のカード。`,hint:'コール＝続行 ／ レイズ＝プレッシャー ／ フォールド＝降りる'}
+      : {sit:`🃏 ターンカードが出ました。チェックかベット。`,hint:'役が弱いならチェック、強いならレイズ！'};
+  }
+  if(G.phase==='river'){
+    return toCall>0
+      ? {sit:`📢 最終ラウンド！相手がベット（${G.ob}）。最後の判断を。`,hint:'降りたくなければコール。自信があればレイズ！'}
+      : {sit:`🃏 リバー（最後のカード）！これが最終ラウンドです。`,hint:'チェックでショーダウン（手比べ）へ進みます'};
+  }
+  if(G.phase==='showdown'){return {sit:'🏁 ショーダウン！お互いの手を公開。',hint:'強い役を持っている方がポットを獲得！'};}
+  return {sit:'',hint:''};
+}
+function setGuide(sit,hint){$('guide-situation').textContent=sit;$('guide-hint').textContent=hint;}
+
+// ── CARDS / EVAL ──
+function mkDeck(){return SUITS.flatMap(s=>RANKS.map(r=>({r,s})));}
+function shuf(d){for(let i=d.length-1;i>0;i--){const j=0|Math.random()*(i+1);[d[i],d[j]]=[d[j],d[i]];}return d;}
+function cardEl(c,fd){
+  const el=document.createElement('div');
+  el.className='card '+(fd?'fd':'fu');
+  if(!fd){const red=c.s==='♥'||c.s==='♦';el.classList.add(red?'red':'blk');
+    el.innerHTML=`<div class="c-tl">${c.r}<br>${c.s}</div><div class="c-rank">${c.r}</div><div class="c-suit">${c.s}</div><div class="c-br">${c.r}<br>${c.s}</div>`;}
+  return el;
+}
+function evalH(cs){
+  const rv=cs.map(c=>RV[c.r]).sort((a,b)=>b-a);
+  const sv=cs.map(c=>c.s);const fl=sv.every(s=>s===sv[0]);
+  const rc={};for(const r of rv)rc[r]=(rc[r]||0)+1;
+  const cnt=Object.values(rc).sort((a,b)=>b-a);
+  const ur=Object.keys(rc).map(Number).sort((a,b)=>b-a);
+  let st=false,sh=0;
+  if(ur.length===5){if(ur[0]-ur[4]===4){st=true;sh=ur[0];}if(ur[0]===14&&ur[1]===5&&ur[4]===2){st=true;sh=5;}}
+  let rank,tb;
+  if(fl&&st){rank=8;tb=[sh];}
+  else if(cnt[0]===4){rank=7;tb=[...ur.filter(r=>rc[r]==4),...ur.filter(r=>rc[r]!=4)];}
+  else if(cnt[0]===3&&cnt[1]===2){rank=6;tb=[...ur.filter(r=>rc[r]==3),...ur.filter(r=>rc[r]==2)];}
+  else if(fl){rank=5;tb=rv;}
+  else if(st){rank=4;tb=[sh];}
+  else if(cnt[0]===3){rank=3;tb=[...ur.filter(r=>rc[r]==3),...ur.filter(r=>rc[r]!=3)];}
+  else if(cnt[0]===2&&cnt[1]===2){rank=2;tb=[...ur.filter(r=>rc[r]==2).sort((a,b)=>b-a),...ur.filter(r=>rc[r]==1)];}
+  else if(cnt[0]===2){rank=1;tb=[...ur.filter(r=>rc[r]==2),...ur.filter(r=>rc[r]!=2)];}
+  else{rank=0;tb=rv;}
+  return{rank,tb};
+}
+function bestH(cs){
+  if(cs.length<5)return evalH(cs.length?cs:[{r:'2',s:'♠'}]);
+  let best=null;
+  for(let i=0;i<cs.length-1;i++)for(let j=i+1;j<cs.length;j++){
+    const five=cs.filter((_,k)=>k!==i&&k!==j);if(five.length<5)continue;
+    const v=evalH(five);if(!best||cmpH(v,best)>0)best=v;
+  }
+  return best||evalH(cs.slice(0,5));
+}
+function cmpH(a,b){
+  if(a.rank!==b.rank)return a.rank-b.rank;
+  for(let i=0;i<Math.min(a.tb.length,b.tb.length);i++)if(a.tb[i]!==b.tb[i])return a.tb[i]-b.tb[i];
+  return 0;
+}
+
+// ── STATE ──
+let G={dk:[],ph:[],oh:[],cm:[],pc:1500,oc:1500,pot:0,pb:0,ob:0,cur:0,
+       phase:'idle',pTurn:false,pF:false,oF:false,dlrP:true,sb:10,
+       pAllin:false, oAllin:false};
+
+function setS(m,c=''){$('status-msg').textContent=m;$('status-msg').className=c;}
+function setBadge(t){$('badge').textContent=t;}
+
+function updUI(skipGuide){
+  $('pc').textContent=G.pc; $('oc').textContent=G.oc;
+  $('pv').textContent=G.pot;
+  $('pba').textContent=G.pb; $('oba').textContent=G.ob;
+  $('tca').textContent=Math.max(0,G.cur-G.pb);
+  $('player-allin').style.display=G.pAllin?'inline-block':'none';
+  $('opp-allin').style.display=G.oAllin?'inline-block':'none';
+  if(!skipGuide){const g=getGuide(G);setGuide(g.sit,g.hint);}
+}
+
+function setBtns(chk,call,raise,fold,deal){
+  $('bcheck').disabled=!chk;$('bcall').disabled=!call;
+  $('braise').disabled=!raise;$('bfold').disabled=!fold;$('bdeal').disabled=!deal;
+  if(call){
+    const tc=Math.min(G.cur-G.pb,G.pc);
+    $('bcall').querySelector('.btn-main').textContent=`Call ${tc}`;
+  }else{$('bcall').querySelector('.btn-main').textContent='Call';}
+}
+function disAll(){setBtns(false,false,false,false,false);}
+
+function render(){
+  $('player-cards').innerHTML='';
+  for(const c of G.ph)$('player-cards').appendChild(cardEl(c,false));
+  $('opp-cards').innerHTML='';
+  const showO=G.phase==='showdown'&&!G.oF;
+  for(const c of G.oh)$('opp-cards').appendChild(cardEl(c,!showO));
+  $('comm-row').innerHTML='';
+  for(const c of G.cm)$('comm-row').appendChild(cardEl(c,false));
+  for(let i=G.cm.length;i<5;i++){const p=document.createElement('div');p.className='card fd ph';$('comm-row').appendChild(p);}
+  if(G.cm.length>=3&&!G.pF&&G.ph.length){
+    const h=bestH([...G.ph,...G.cm]);$('pr').textContent='あなた：'+HN[h.rank];$('pr').style.display='inline-block';
+  }else $('pr').style.display='none';
+  if(G.phase==='showdown'&&!G.oF&&G.oh.length){
+    const h=bestH([...G.oh,...G.cm]);$('or').textContent='相手：'+HN[h.rank];$('or').style.display='inline-block';
+  }else $('or').style.display='none';
+  updUI(G.phase==='showdown');
+}
+
+function updSlider(){
+  const toCall=Math.max(0,G.cur-G.pb);
+  const maxRaise=Math.max(0,G.pc-toCall);
+  const sl=$('rslider');
+  sl.min=Math.min(10,maxRaise||10);
+  sl.max=maxRaise||10;
+  sl.step=1;
+  const v=Math.min(parseInt(sl.value)||10, maxRaise||10);
+  sl.value=v;
+  $('ramt').textContent=(v>=(maxRaise-1)&&maxRaise>0)?maxRaise+' 🔥':v;
+}
+
+// Player actions setup — key fix: オールイン後は自動進行
+function setPA(){
+  // オールイン済みなら何も選べない → 自動で相手へ
+  if(G.pAllin){
+    disAll();
+    setS('🔥 オールイン中。カードに任せましょう！');
+    updUI();
+    setTimeout(oppAct,800);
+    return;
+  }
+  const toCall=G.cur-G.pb;
+  // コールできるか（チップが足りなくてもオールインコールができる）
+  const canCall=toCall>0&&G.pc>0;
+  // レイズできるか（コール分+1以上ないと無理）
+  const canRaise=G.pc>Math.max(0,toCall);
+  setBtns(toCall<=0, canCall, canRaise, true, false);
+  updSlider(); updUI();
+}
+
+function betChip(who,amt){
+  amt=Math.max(0,Math.min(amt,who==='p'?G.pc:G.oc));
+  if(!amt)return 0;
+  if(who==='p'){G.pc-=amt;G.pb+=amt;}else{G.oc-=amt;G.ob+=amt;}
+  G.pot+=amt;return amt;
+}
+
+// ── DEAL ──
+function deal(){
+  // チップ切れチェック → リセットして続行
+  if(G.pc<=0&&G.oc<=0){ G.pc=1500; G.oc=1500; }
+  else if(G.pc<=0){ G.pc=1500; }
+  else if(G.oc<=0){ G.oc=1500; }
+
+  G.dk=shuf(mkDeck());G.ph=[G.dk.pop(),G.dk.pop()];G.oh=[G.dk.pop(),G.dk.pop()];
+  G.cm=[];G.pot=G.pb=G.ob=G.cur=0;G.pF=G.oF=false;G.pAllin=false;G.oAllin=false;
+  G.phase='preflop';
+  $('opp-status').textContent='';
+  $('opp-area').classList.remove('win-glow');$('player-area').classList.remove('win-glow');
+  const sb=Math.min(G.sb,G.dlrP?G.pc:G.oc);
+  const bb=Math.min(G.sb*2,G.dlrP?G.oc:G.pc);
+  if(G.dlrP){betChip('p',sb);betChip('o',bb);}else{betChip('o',sb);betChip('p',bb);}
+  G.cur=Math.max(G.pb,G.ob);
+  if(G.pc===0)G.pAllin=true;
+  if(G.oc===0)G.oAllin=true;
+  setBadge('PRE-FLOP');setS('ホールカード2枚が配られました。');
+  render();G.pTurn=true;setPA();
+}
+
+// ── PLAYER ACTIONS ──
+$('bfold').onclick=()=>{
+  if(!G.pTurn||G.pAllin)return;
+  G.pF=true;G.pTurn=false;disAll();
+  setS('フォールド（降りた）。');
+  endH('opp');
+};
+
+$('bcheck').onclick=()=>{
+  if(!G.pTurn||G.pAllin||G.cur-G.pb>0)return;
+  G.pTurn=false;disAll();setS('チェック（様子見）。');
+  setGuide('⏳ 相手が考えています...','');
+  setTimeout(oppAct,600);
+};
+
+$('bcall').onclick=()=>{
+  if(!G.pTurn||G.pAllin)return;
+  const toCall=G.cur-G.pb;
+  if(toCall<=0)return;
+  const actual=Math.min(toCall,G.pc); // 持っているだけ出す（オールインコール）
+  betChip('p',actual);
+  if(G.pc===0){G.pAllin=true;}
+  G.pb=Math.min(G.cur,G.pb); // オールインの場合は上限まで
+  render();G.pTurn=false;disAll();
+  if(G.pAllin){setS(`🔥 オールイン！${actual} チップをすべて賭けました！`);setGuide('🔥 オールイン！全チップを賭けました。','ショーダウンまで自動で進みます');}
+  else{setS(`コール！${actual} チップを出しました。`);setGuide('⏳ 相手が考えています...','');}
+  setTimeout(oppAct,700);
+};
+
+$('braise').onclick=()=>{
+  if(!G.pTurn||G.pAllin)return;
+  const toCall=Math.max(0,G.cur-G.pb);
+  const maxRaise=Math.max(0,G.pc-toCall);
+  const slVal=parseInt($('rslider').value);
+  // スライダーが最大値付近ならオールイン
+  const ra=(slVal>=maxRaise-1)?maxRaise:slVal;
+  const need=toCall+ra;
+  const actual=Math.min(need,G.pc);
+  betChip('p',actual);
+  G.cur=G.pb;
+  if(G.pc===0){G.pAllin=true;}
+  render();G.pTurn=false;disAll();
+  if(G.pAllin){setS(`🔥 オールイン！合計 ${G.pb} チップを全賭け！`);setGuide('🔥 オールイン！全チップを賭けました。','ショーダウンまで自動で進みます');}
+  else{setS(`レイズ！合計 ${G.pb} チップを賭けました。`);setGuide('⏳ 相手が考えています...','');}
+  setTimeout(oppAct,800);
+};
+
+$('bdeal').onclick=()=>deal();
+$('rslider').oninput=()=>{
+  const sl=$('rslider');
+  const toCall=Math.max(0,G.cur-G.pb);
+  const maxRaise=G.pc-toCall;
+  const val=parseInt(sl.value);
+  // 最大値付近（95%以上）または最大値ならオールイン全額
+  if(val>=parseInt(sl.max)-9){
+    sl.value=sl.max;
+    $('ramt').textContent=maxRaise<=0?G.pc:maxRaise+' 🔥';
+  }else{
+    $('ramt').textContent=val;
+  }
+};
+
+// ── OPP AI ──
+function oppAct(){
+  if(G.oF||G.phase==='showdown')return;
+
+  // 相手がオールイン済みなら自動進行
+  if(G.oAllin){
+    advP();return;
+  }
+  // プレイヤーがオールイン済みで相手は問題ない場合、相手はコール or フォールドのみ
+  $('opp-status').innerHTML='<span class="thinking">• • •</span>';
+  setTimeout(()=>{
+    $('opp-status').textContent='';
+    const toCall=G.cur-G.ob;
+    const all=[...G.oh,...G.cm];
+    let str=0;
+    if(all.length>=5){str=bestH(all).rank;}
+    else{const rv=G.oh.map(c=>RV[c.r]);str=(Math.max(...rv)-7)/7;}
+    const rnd=Math.random();
+    let act;
+    if(G.pAllin){
+      // 相手はコールかフォールドのみ（レイズ不可）
+      act=(rnd<0.2&&str<2)?'fold':'call';
+    }else if(toCall<=0){
+      act=(str>=3||rnd<0.3)?'bet':'check';
+    }else{
+      const ft=toCall>200?0.4:0.15;
+      if(rnd<ft&&str<2)act='fold';
+      else if(str>=4&&rnd<0.4)act='raise';
+      else act='call';
+    }
+
+    if(act==='fold'){G.oF=true;$('opp-status').textContent='Fold 🚫';endH('player');}
+    else if(act==='check'){$('opp-status').textContent='Check ✅';advP();}
+    else if(act==='call'){
+      const tc=Math.min(toCall,G.oc);
+      betChip('o',tc);
+      if(G.oc===0)G.oAllin=true;
+      $('opp-status').textContent=G.oAllin?`ALL IN 🔥`:`Call ${tc}`;
+      render();advP();
+    }else{
+      // raise
+      const ra=Math.min(Math.floor(20+rnd*80),G.oc);
+      const tot=Math.min(toCall+ra,G.oc);
+      betChip('o',tot);G.cur=G.ob;
+      if(G.oc===0)G.oAllin=true;
+      $('opp-status').textContent=G.oAllin?`ALL IN 🔥`:`Raise↑${G.ob}`;
+      render();
+
+      // プレイヤーがオールイン済みなら、さらなるアクション不要で自動進行
+      if(G.pAllin){
+        advP();
+      }else{
+        G.pTurn=true;setPA();setS('相手がレイズしてきました！');
+      }
+    }
+  },900+Math.random()*500);
+}
+
+// ── PHASE ADVANCE ──
+function advP(){
+  render();
+  if(G.phase==='preflop'){G.cm.push(G.dk.pop(),G.dk.pop(),G.dk.pop());G.phase='flop';rst();setBadge('FLOP');setS('フロップ！3枚のカードが出ました。');}
+  else if(G.phase==='flop'){G.cm.push(G.dk.pop());G.phase='turn';rst();setBadge('TURN');setS('ターン。4枚目のカードです。');}
+  else if(G.phase==='turn'){G.cm.push(G.dk.pop());G.phase='river';rst();setBadge('RIVER');setS('リバー。最後（5枚目）のカードです！');}
+  else if(G.phase==='river'){G.phase='showdown';setBadge('SHOWDOWN');showdown();return;}
+  render();
+
+  // 両者オールインなら自動進行（ベットラウンドなし）
+  if(G.pAllin&&G.oAllin){
+    setGuide('🔥 両者オールイン！カードをめくっています...','');
+    setTimeout(advP,800);
+    return;
+  }
+  // どちらかオールインなら、残りプレイヤーが先に動く（ベット不要なのでcheck扱い）
+  if(G.pAllin&&!G.oAllin){
+    setGuide('🔥 あなたはオールイン中。相手のアクションを待っています。','');
+    setTimeout(oppAct,800);return;
+  }
+  if(G.oAllin&&!G.pAllin){
+    // プレイヤーはチェックしか選択肢なし（相手はオールイン済み）
+    G.pTurn=true;
+    setBtns(true,false,false,false,false);
+    setGuide('相手はオールイン済み。チェックで次へ進めます。','');
+    updUI();return;
+  }
+  G.pTurn=true;setPA();
+}
+function rst(){G.pb=G.ob=G.cur=0;}
+
+function showdown(){
+  render();
+  const ph=bestH([...G.ph,...G.cm]);const oh=bestH([...G.oh,...G.cm]);
+  setGuide('🔍 お互いの手を公開！強い役を持っている方が勝ちです。','');
+  setTimeout(()=>{const r=cmpH(ph,oh);if(r>0)endH('player');else if(r<0)endH('opp');else endH('tie');},1000);
+}
+
+function endH(w){
+  G.phase='showdown';render();
+  if(w==='player'){
+    G.pc+=G.pot;setS(`🏆 あなたの勝ち！ポット ${G.pot} 獲得！`,'win');
+    $('player-area').classList.add('win-glow');$('opp-status').textContent=G.oF?'Folded 🚫':'Loses';
+    setGuide('🏆 勝ちました！ポットをすべて獲得！','NEW HANDで次のハンドへ');
+  }else if(w==='opp'){
+    G.oc+=G.pot;setS(`💀 相手の勝ち。ポット ${G.pot} を失いました。`,'lose');
+    $('opp-area').classList.add('win-glow');
+    setGuide('💀 負けました。','NEW HANDで次のハンドへ');
+  }else{
+    const h=Math.floor(G.pot/2);G.pc+=h;G.oc+=h;setS(`🤝 引き分け！各 ${h} チップ。`,'tie');
+    setGuide('🤝 引き分け！ポットを分け合いました。','NEW HANDで次のハンドへ');
+  }
+  G.pot=0;updUI(true);G.dlrP=!G.dlrP;
+  // チップ切れの場合はガイドを上書き
+  if(G.pc<=0){ setGuide('💀 チップ切れ！NEW HANDでリセットして再スタートできます。',''); }
+  else if(G.oc<=0){ setGuide('🏆 相手のチップを全部奪った！NEW HANDで続けられます。',''); }
+  setBtns(false,false,false,false,true);setBadge('HAND OVER');
+}
+
+// Init
+setBtns(false,false,false,false,true);render();
+</script>
+</body>
+</html>
